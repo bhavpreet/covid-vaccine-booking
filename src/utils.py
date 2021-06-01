@@ -15,6 +15,7 @@ import tabulate
 from captcha import captcha_builder_auto, captcha_builder_manual
 from inputimeout import TimeoutOccurred, inputimeout
 from ratelimit import handle_rate_limited
+import socket
 
 
 BOOKING_URL = "https://cdn-api.co-vin.in/api/v2/appointment/schedule"
@@ -1209,8 +1210,8 @@ def get_min_age(beneficiary_dtls):
 
 
 def clear_bucket_and_send_OTP(storage_url, mobile, request_header):
-    print("clearing OTP bucket: " + storage_url)
-    response = requests.put(storage_url, data={})
+    # print("clearing OTP bucket: " + storage_url)
+    # response = requests.put(storage_url, data={})
     data = {
         "mobile": mobile,
         "secret": "U2FsdGVkX1+z/4Nr9nta+2DrVJSv7KS6VoQUSQ1ZXYDx/CJUkWxFYG6P3iM/VW+6jLQ9RDQVzp/RcZ8kbT41xw==",
@@ -1235,32 +1236,49 @@ def clear_bucket_and_send_OTP(storage_url, mobile, request_header):
     return txnId
 
 
+def readLocalSocket():
+    addr = ("", 31337)
+    s = socket.create_server(addr)
+    s.listen()
+    print("Listening to:", addr)
+    conn, addr = s.accept()
+    with conn:
+        print('Connected by', addr)
+        while True:
+            data = conn.recv(2048)
+            if not data:
+                break
+            conn.close()
+            s.close()
+            return data.decode("utf-8")
+    
 def generate_token_OTP(mobile, request_header, kvdb_bucket):
     """
     This function generate OTP and returns a new token or None when not able to get token
     """
     storage_url = "https://kvdb.io/" + kvdb_bucket + "/" + mobile
-
     txnId = clear_bucket_and_send_OTP(storage_url, mobile, request_header)
 
     if txnId is None:
         return txnId
 
+    response = readLocalSocket()
     time.sleep(10)
     t_end = time.time() + 60 * 3  # try to read OTP for atmost 3 minutes
     while time.time() < t_end:
-        response = requests.get(storage_url)
-        if response.status_code == 200:
-            print("OTP SMS is:" + response.text)
-            print("OTP SMS len is:" + str(len(response.text)))
-            OTP = extract_from_regex(response.text, SMS_REGEX)
+        if True:
+            print("OTP SMS is:" + response)
+            print("OTP SMS len is:" + str(len(response)))
+
+            OTP = extract_from_regex(response, SMS_REGEX)
             if not OTP:
+                print("OTP NOT FOUND!!!!!")
                 time.sleep(5)
                 continue
             break
         else:
             # Hope it won't 500 a little later
-            print("error fetching OTP API:" + response.text)
+            print("error fetching OTP API:" + response)
             time.sleep(5)
 
     if not OTP:

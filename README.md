@@ -1,3 +1,15 @@
+## This forked version - 
+Replaces the original way of receiving the SMS over the internet by an app that sends data on intranet.
+App is included `app-armeabi-v7a-debug.apk`. 
+- Fire the APP
+- In the text field of the app, write IP address of the machine where you run this script so the APP knows where to send the data. No enter, the Counter thing is dummy and testing.
+
+*NOTE: machine running the script the the mobile should be on the same network.*
+
+**USE AT YOUR OWN RISK**
+
+Original README:
+
 <h1 align="center"> Bombardier Fully Automated COVID-19 Vaccination Slot Booking Script</h1>
 
 <div align="center">
